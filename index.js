@@ -1,8 +1,8 @@
 require("dotenv").config();
 const express = require("express");
-const mongoose = require("mongoose");
 const cors = require("cors");
 const serverless = require("serverless-http");
+const connectDB = require("./db");
 
 const authRoute = require("./routes/auth");
 const profileRoute = require("./routes/profile");
@@ -10,36 +10,27 @@ const tipsRoute = require("./routes/tip");
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://pay-day-frontend.vercel.app",
+    "http://localhost:5173"
+  ]
+}));
+
 app.use(express.json());
 
-// ✅ MongoDB connection cache (CRITICAL)
-let isConnected = false;
-
-async function connectDB() {
-  if (isConnected) return;
-
-  await mongoose.connect(process.env.MONGO_URI, {
-    bufferCommands: false,
-  });
-
-  isConnected = true;
-  console.log("MongoDB connected");
-}
-
+// ✅ ENSURE DB CONNECTS BEFORE ANY ROUTE
 app.use(async (req, res, next) => {
   try {
     await connectDB();
     next();
   } catch (err) {
-    console.error("MongoDB connection error:", err);
-    res.status(500).json({ error: "Database connection failed" });
+    console.error("DB connection failed:", err);
+    return res.status(500).json({ error: "Database connection failed" });
   }
 });
 
-app.get("/", (req, res) =>
-  res.send("Hello from Payday Picks Backend!")
-);
+app.get("/", (req, res) => res.send("Backend running"));
 
 app.use("/api/profile", profileRoute);
 app.use("/api/auth", authRoute);
