@@ -16,6 +16,7 @@ app.use(express.json());
 let isConnected = false;
 
 async function connectDB() {
+  console.log("MONGO_URI exists:", !!process.env.MONGO_URI);
   if (isConnected) return;
 
   await mongoose.connect(process.env.MONGO_URI);
