@@ -13,16 +13,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ MongoDB connection cache (CRITICAL)
 let isConnected = false;
 
 async function connectDB() {
   if (isConnected) return;
 
-  await mongoose.connect(process.env.MONGO_URI, {
-    bufferCommands: false,
-  });
-
+  await mongoose.connect(process.env.MONGO_URI);
   isConnected = true;
   console.log("MongoDB connected");
 }
@@ -32,7 +28,7 @@ app.use(async (req, res, next) => {
     await connectDB();
     next();
   } catch (err) {
-    console.error("MongoDB connection error:", err);
+    console.error("MongoDB error:", err);
     res.status(500).json({ error: "Database connection failed" });
   }
 });
@@ -47,3 +43,4 @@ app.use("/api/tip", tipsRoute);
 
 module.exports = app;
 module.exports.handler = serverless(app);
+
