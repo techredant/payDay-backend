@@ -9,7 +9,11 @@ const tipSchema = new mongoose.Schema(
     prediction: { type: String, required: true },
     odds: { type: String },
     confidence: { type: Number, default: 75 },
-    time: { type: String },
+    time: {
+  type: Date,
+  required: true,
+},
+
     isVip: { type: Boolean, default: false },
     status: {
       type: String,
