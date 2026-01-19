@@ -1,10 +1,10 @@
 const express = require("express");
+const profile = require("../models/Profile");
 const router = express.Router();
-const Profile = require("../models/profile");
 
 router.get("/", async (req, res) => {
   try {
-    const profiles = await Profile.find();
+    const profiles = await profile.find();
     res.json(profiles);
   } catch (err) {
     res.status(500).json({ error: "Server error" });

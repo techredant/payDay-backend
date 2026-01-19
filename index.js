@@ -7,6 +7,7 @@ const serverless = require("serverless-http");
 const authRoute = require("./routes/auth");
 const profileRoute = require("./routes/profile");
 const tipsRoute = require("./routes/tip");
+const mpesaRoutes = require("./routes/mpesaRoutes.js");
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.get("/", (req, res) =>
   res.send("Hello from Payday Picks Backend!")
 );
 
+app.use("/api/mpesa", mpesaRoutes);
 app.use("/api/profile", profileRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/tip", tipsRoute);
