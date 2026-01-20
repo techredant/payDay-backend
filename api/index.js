@@ -3,9 +3,9 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
-const authRoute = require("./routes/auth");
-const profileRoute = require("./routes/profile");
-const tipsRoute = require("./routes/tip");
+const authRoute = require("./routes/auth.js");
+const profileRoute = require("./routes/profile.js");
+const tipsRoute = require("./routes/tip.js");
 const mpesaRoutes = require("./routes/mpesaRoutes.js");
 
 const app = express();
