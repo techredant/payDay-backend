@@ -1,4 +1,5 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
+
 
 const subscriptionSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "Profile", required: true },
@@ -11,4 +12,4 @@ const subscriptionSchema = new mongoose.Schema({
   checkoutRequestId: String,
 });
 
-export default mongoose.model("Subscription", subscriptionSchema);
+module.exports = mongoose.model("Subscription", subscriptionSchema);

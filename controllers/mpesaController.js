@@ -1,12 +1,8 @@
-import Subscription from "../models/Subscription.js";
-import Profile from "../models/Profile.js";
-
 const axios = require("axios");
+const Subscription = require("../models/Subscription.js");
+const Profile = require("../models/Profile.js");
 
-/* =======================
-   INITIATE STK PUSH
-======================= */
-export const initiateStkPush = async (req, res) => {
+exports.initiateStkPush = async (req, res) => {
   try {
     const { phone, amount, plan, userId } = req.body;
 
@@ -14,12 +10,6 @@ export const initiateStkPush = async (req, res) => {
       return res.status(400).json({ message: "Missing fields" });
     }
 
-    // Normalize phone to 2547XXXXXXXX
-    const formattedPhone = phone.startsWith("0")
-      ? "254" + phone.slice(1)
-      : phone;
-
-    // 1️⃣ Create pending subscription
     const subscription = await Subscription.create({
       userId,
       plan,
@@ -27,7 +17,6 @@ export const initiateStkPush = async (req, res) => {
       status: "pending",
     });
 
-    // 2️⃣ Get access token
     const auth = Buffer.from(
       `${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`
     ).toString("base64");
@@ -41,7 +30,6 @@ export const initiateStkPush = async (req, res) => {
 
     const accessToken = tokenRes.data.access_token;
 
-    // 3️⃣ Generate password
     const timestamp = new Date()
       .toISOString()
       .replace(/[^0-9]/g, "")
@@ -51,8 +39,7 @@ export const initiateStkPush = async (req, res) => {
       `${process.env.MPESA_SHORTCODE}${process.env.MPESA_PASSKEY}${timestamp}`
     ).toString("base64");
 
-    // 4️⃣ Send STK push
-    const stkRes = await axios.post(
+    await axios.post(
       "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
       {
         BusinessShortCode: process.env.MPESA_SHORTCODE,
@@ -60,10 +47,10 @@ export const initiateStkPush = async (req, res) => {
         Timestamp: timestamp,
         TransactionType: "CustomerPayBillOnline",
         Amount: amount,
-        PartyA: formattedPhone,
+        PartyA: phone,
         PartyB: process.env.MPESA_SHORTCODE,
-        PhoneNumber: formattedPhone,
-        CallBackURL: `${process.env.BASE_URL}/api/mpesa/callback?secret=${process.env.MPESA_CALLBACK_SECRET}`,
+        PhoneNumber: phone,
+        CallBackURL: `${process.env.BASE_URL}/api/mpesa/callback`,
         AccountReference: subscription._id.toString(),
         TransactionDesc: plan,
       },
@@ -71,10 +58,6 @@ export const initiateStkPush = async (req, res) => {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
     );
-
-    // Save checkout request ID for tracking
-    subscription.checkoutRequestId = stkRes.data.CheckoutRequestID;
-    await subscription.save();
 
     res.json({
       success: true,
@@ -87,16 +70,8 @@ export const initiateStkPush = async (req, res) => {
   }
 };
 
-/* =======================
-   MPESA CALLBACK
-======================= */
-export const mpesaCallback = async (req, res) => {
+exports.mpesaCallback = async (req, res) => {
   try {
-    // Validate callback secret
-    if (req.query.secret !== process.env.MPESA_CALLBACK_SECRET) {
-      return res.status(401).json({ ok: false });
-    }
-
     const result = req.body.Body.stkCallback;
 
     if (result.ResultCode !== 0) {
@@ -111,20 +86,19 @@ export const mpesaCallback = async (req, res) => {
       (i) => i.Name === "MpesaReceiptNumber"
     ).Value;
 
-    const subscriptionDoc = await Subscription.findById(result.AccountReference);
+    const subscriptionId = result.AccountReference;
 
     const subscription = await Subscription.findByIdAndUpdate(
-      result.AccountReference,
+      subscriptionId,
       {
         status: "active",
         paymentRef: receipt,
         startDate: new Date(),
-        endDate: getExpiryDate(subscriptionDoc.plan),
+        endDate: getExpiryDate(subscription.plan),
       },
       { new: true }
     );
 
-    // Activate VIP
     await Profile.findByIdAndUpdate(subscription.userId, {
       isVip: true,
       vipExpiry: subscription.endDate,

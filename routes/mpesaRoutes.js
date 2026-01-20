@@ -1,10 +1,9 @@
-import express from "express";
-import { initiateStkPush, mpesaCallback } from "../controllers/mpesaController";
-
+const express = require("express");
+const { initiateStkPush, mpesaCallback } = require("../controllers/mpesaController.js");
 
 const router = express.Router();
 
 router.post("/stk-push", initiateStkPush);
 router.post("/callback", mpesaCallback);
 
-export default router;
+module.exports = router;
