@@ -1,6 +1,7 @@
-import axios from "axios";
+
 import Subscription from "../models/Subscription.js";
 import Profile from "../models/Profile.js";
+const axios = require("axios");
 
 /* =======================
    INITIATE STK PUSH
