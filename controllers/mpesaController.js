@@ -1,3 +1,4 @@
+// backend/controllers/mpesaController.js
 const axios = require("axios");
 const Subscription = require("../models/Subscription.js");
 const Profile = require("../models/Profile.js");
@@ -39,14 +40,14 @@ exports.initiateStkPush = async (req, res) => {
       `${process.env.MPESA_SHORTCODE}${process.env.MPESA_PASSKEY}${timestamp}`
     ).toString("base64");
 
-    await axios.post(
+    const stkRes = await axios.post(
       "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
       {
         BusinessShortCode: process.env.MPESA_SHORTCODE,
         Password: password,
         Timestamp: timestamp,
         TransactionType: "CustomerPayBillOnline",
-        Amount: amount,
+        Amount: Number(amount),
         PartyA: phone,
         PartyB: process.env.MPESA_SHORTCODE,
         PhoneNumber: phone,
@@ -63,12 +64,17 @@ exports.initiateStkPush = async (req, res) => {
       success: true,
       message: "STK Push sent",
       subscriptionId: subscription._id,
+      stkResponse: stkRes.data,  // <-- IMPORTANT for debugging
     });
   } catch (error) {
     console.error("STK error:", error.response?.data || error.message);
-    res.status(500).json({ message: "STK Push failed" });
+    res.status(500).json({
+      message: "STK Push failed",
+      error: error.response?.data || error.message,
+    });
   }
 };
+
 
 exports.mpesaCallback = async (req, res) => {
   try {

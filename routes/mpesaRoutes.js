@@ -1,3 +1,4 @@
+// backend/routes/mpesaRoutes.js
 const express = require("express");
 const { initiateStkPush, mpesaCallback } = require("../controllers/mpesaController.js");
 
