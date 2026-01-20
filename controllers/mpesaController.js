@@ -46,7 +46,7 @@ exports.initiateStkPush = async (req, res) => {
         BusinessShortCode: process.env.MPESA_SHORTCODE,
         Password: password,
         Timestamp: timestamp,
-        TransactionType: "CustomerPayBillOnline",
+        TransactionType: "CustomerBuyGoodsOnline",
         Amount: Number(amount),
         PartyA: phone,
         PartyB: process.env.MPESA_SHORTCODE,
@@ -56,7 +56,7 @@ exports.initiateStkPush = async (req, res) => {
         TransactionDesc: plan,
       },
       {
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
       }
     );
 
