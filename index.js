@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const authRoute = require("./routes/auth");
-const profileRoute = require("./routes/Profile");
+const profileRoute = require("./routes/profile");
 const tipsRoute = require("./routes/tip");
 const mpesaRoutes = require("./routes/mpesaRoutes.js");
 
