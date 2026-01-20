@@ -1,6 +1,6 @@
 // backend/routes/tip.js
 const express = require("express");
-const Tip = require("../models/tip");
+const Tip = require("../models/Tip");
 
 const router = express.Router();
 
