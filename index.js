@@ -25,6 +25,17 @@ async function connectDB() {
   console.log("MongoDB connected");
 }
 
+// ✅ CONNECT DB BEFORE ROUTES
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error("MongoDB error:", err);
+    res.status(500).json({ error: "Database connection failed" });
+  }
+});
+
 // TEST route
 app.get("/", (req, res) => {
   res.send("Hello from Payday Picks Backend!");
