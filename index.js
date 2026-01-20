@@ -22,8 +22,6 @@ async function connectDB() {
   isConnected = true;
 }
 
-console.log("Database connection module loaded.");
-
 app.use(async (req, res, next) => {
   try {
     await connectDB();
