@@ -13,6 +13,11 @@ export const initiateStkPush = async (req, res) => {
       return res.status(400).json({ message: "Missing fields" });
     }
 
+    // Normalize phone to 2547XXXXXXXX
+    const formattedPhone = phone.startsWith("0")
+      ? "254" + phone.slice(1)
+      : phone;
+
     // 1️⃣ Create pending subscription
     const subscription = await Subscription.create({
       userId,
@@ -46,7 +51,7 @@ export const initiateStkPush = async (req, res) => {
     ).toString("base64");
 
     // 4️⃣ Send STK push
-    await axios.post(
+    const stkRes = await axios.post(
       "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
       {
         BusinessShortCode: process.env.MPESA_SHORTCODE,
@@ -54,10 +59,10 @@ export const initiateStkPush = async (req, res) => {
         Timestamp: timestamp,
         TransactionType: "CustomerPayBillOnline",
         Amount: amount,
-        PartyA: phone,
+        PartyA: formattedPhone,
         PartyB: process.env.MPESA_SHORTCODE,
-        PhoneNumber: phone,
-        CallBackURL: `${process.env.BASE_URL}/api/mpesa/callback`,
+        PhoneNumber: formattedPhone,
+        CallBackURL: `${process.env.BASE_URL}/api/mpesa/callback?secret=${process.env.MPESA_CALLBACK_SECRET}`,
         AccountReference: subscription._id.toString(),
         TransactionDesc: plan,
       },
@@ -65,6 +70,10 @@ export const initiateStkPush = async (req, res) => {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
     );
+
+    // Save checkout request ID for tracking
+    subscription.checkoutRequestId = stkRes.data.CheckoutRequestID;
+    await subscription.save();
 
     res.json({
       success: true,
@@ -82,6 +91,11 @@ export const initiateStkPush = async (req, res) => {
 ======================= */
 export const mpesaCallback = async (req, res) => {
   try {
+    // Validate callback secret
+    if (req.query.secret !== process.env.MPESA_CALLBACK_SECRET) {
+      return res.status(401).json({ ok: false });
+    }
+
     const result = req.body.Body.stkCallback;
 
     if (result.ResultCode !== 0) {
@@ -96,15 +110,15 @@ export const mpesaCallback = async (req, res) => {
       (i) => i.Name === "MpesaReceiptNumber"
     ).Value;
 
-    const subscriptionId = result.AccountReference;
+    const subscriptionDoc = await Subscription.findById(result.AccountReference);
 
     const subscription = await Subscription.findByIdAndUpdate(
-      subscriptionId,
+      result.AccountReference,
       {
         status: "active",
         paymentRef: receipt,
         startDate: new Date(),
-        endDate: getExpiryDate(subscription.plan),
+        endDate: getExpiryDate(subscriptionDoc.plan),
       },
       { new: true }
     );
