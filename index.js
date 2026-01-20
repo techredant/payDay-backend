@@ -7,6 +7,7 @@ const serverless = require("serverless-http");
 const authRoute = require("./routes/auth");
 const profileRoute = require("./routes/profile");
 const tipsRoute = require("./routes/tip");
+const mpesaRoutes = require("./routes/mpesaRoutes"); // ✅ ADD THIS
 
 const app = express();
 app.use(cors());
@@ -45,6 +46,7 @@ app.get("/", (req, res) => {
 app.use("/api/profile", profileRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/tip", tipsRoute);
+app.use("/api/mpesa", mpesaRoutes); 
 
 // SERVERLESS
 module.exports = app;
