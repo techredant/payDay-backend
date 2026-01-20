@@ -1,5 +1,6 @@
 import express from "express";
-import { initiateStkPush, mpesaCallback } from "../api/controllers/mpesaController.js";
+import { initiateStkPush, mpesaCallback } from "../controllers/mpesaController";
+
 
 const router = express.Router();
 
