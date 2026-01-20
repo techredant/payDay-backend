@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const serverless = require("serverless-http");
 
 const authRoute = require("./routes/auth.js");
 const profileRoute = require("./routes/profile.js");
@@ -16,12 +17,9 @@ app.use(express.json());
 let isConnected = false;
 
 async function connectDB() {
-  console.log("MONGO_URI exists:", !!process.env.MONGO_URI);
   if (isConnected) return;
-
   await mongoose.connect(process.env.MONGO_URI);
   isConnected = true;
-  console.log("MongoDB connected");
 }
 
 app.use(async (req, res, next) => {
@@ -29,8 +27,7 @@ app.use(async (req, res, next) => {
     await connectDB();
     next();
   } catch (err) {
-    console.error("MongoDB error:", err);
-    res.status(500).json({ error: "Database connection failed", message: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -41,5 +38,5 @@ app.use("/api/profile", profileRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/tip", tipsRoute);
 
-// ONLY export app
 module.exports = app;
+module.exports.handler = serverless(app);
