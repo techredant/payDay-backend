@@ -3,7 +3,7 @@ import { initiateStkPush, mpesaCallback } from "../controllers/mpesaController.j
 
 const router = express.Router();
 
-router.post("/stkpush", initiateStkPush);
+router.post("/stk-push", initiateStkPush);
 router.post("/callback", mpesaCallback);
 
 export default router;
